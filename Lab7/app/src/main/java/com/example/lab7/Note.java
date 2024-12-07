@@ -3,19 +3,26 @@ package com.example.lab7;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
 import java.util.Objects;
 
+@Entity(tableName = "notes") // Таблица будет называться "notes"
 public class Note implements Parcelable {
-    private final int id;
-    private final String title;
-    private final String content;
-    private boolean isCompleted;
+
+    @PrimaryKey(autoGenerate = true) // ID будет автоинкрементироваться
+    private int id;
+
+    private String title;           // Поле "title"
+    private String content;         // Поле "content"
+    private boolean isCompleted;    // Поле "isCompleted"
 
     // Конструктор
-    public Note(int id, String title, String content) {
-        this.id = id;
+    public Note(String title, String content) {
         this.title = title;
         this.content = content;
+        this.isCompleted = false; // Значение по умолчанию
     }
 
     // Parcelable методы
@@ -70,12 +77,24 @@ public class Note implements Parcelable {
         return id;
     }
 
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public String getTitle() {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public String getContent() {
         return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public boolean isCompleted() {
