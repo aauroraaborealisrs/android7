@@ -95,6 +95,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadNotesFromDatabase() {
+        Log.d("депрессия", "loadNotesFromDatabase called.");
+
         new Thread(() -> {
             notes = notesDao.getAllNotes(); // Получаем заметки из базы
             Log.d("MainActivity", "Загруженные заметки: " + notes.size());
@@ -140,19 +142,45 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_add) {
-            // Создание новой заметки
-            Note newNote = new Note("Новая заметка", "Содержимое новой заметки");
+            // Создаем новую заметку
+            Note newNote = new Note("", "");
 
-            new Thread(() -> {
-                notesDao.insert(newNote); // Добавление в базу данных
-                loadNotesFromDatabase(); // Обновление списка
-            }).start();
+            FragmentNoteDetails detailsFragment = new FragmentNoteDetails();
+            Bundle bundle = new Bundle();
+            bundle.putParcelable("note", newNote);
+            bundle.putBoolean("isEditMode", true);
+            detailsFragment.setArguments(bundle);
 
-            Toast.makeText(this, "Заметка добавлена!", Toast.LENGTH_SHORT).show();
+            // Устанавливаем слушатель для сохранения
+            detailsFragment.setOnNoteUpdatedListener(savedNote -> {
+                new Thread(() -> {
+                    if (savedNote.getId() == 0) {
+                        Log.d("депрессия", " 158 insert called with note: " + savedNote.getTitle());
+                        notesDao.insert(savedNote);
+                        Log.d("MainActivity", "insert called with note: " + savedNote.getTitle());
+                    } else {
+                        notesDao.update(savedNote);
+                    }
+                    loadNotesFromDatabase();
+                }).start();
+            });
+
+            // Отображение фрагмента
+            int containerId = (findViewById(R.id.mainFragmentContainer) != null)
+                    ? R.id.mainFragmentContainer
+                    : R.id.detailsFragmentContainer;
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(containerId, detailsFragment)
+                    .addToBackStack(null)
+                    .commit();
+
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
+
+
 
     private void fillDatabaseWithSampleNotes() {
         new Thread(() -> {

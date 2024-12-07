@@ -73,6 +73,7 @@ public class FragmentNoteList extends Fragment {
     private NoteAdapter adapter;
 
     public void setNotes(List<Note> notes) {
+        Log.d("депрессия", "setNotes called. Previous size: " + this.notes.size() + ", New size: " + notes.size());
         this.notes = notes;
 
         if (adapter != null) {
