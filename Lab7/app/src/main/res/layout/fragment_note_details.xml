@@ -1,48 +1,71 @@
-<androidx.constraintlayout.widget.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    android:orientation="vertical"
+    android:padding="16dp">
 
-    <!-- Заголовок заметки -->
-    <TextView
-        android:id="@+id/noteTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:padding="8dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Описание и чекбокс в одной строке -->
+    <!-- Чекбокс и заголовок на одной строке -->
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="8dp"
-        app:layout_constraintTop_toBottomOf="@id/noteTitle"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        android:layout_marginBottom="8dp">
 
-        <!-- Чекбокс состояния выполнения -->
         <CheckBox
             android:id="@+id/noteCheckbox"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingEnd="8dp" />
+            android:layout_marginEnd="8dp" />
 
-        <!-- Описание заметки -->
-        <TextView
-            android:id="@+id/noteContent"
+        <EditText
+            android:id="@+id/editTextTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:ellipsize="end"
-            android:maxLines="2"
-            android:padding="8dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            android:hint="Заголовок"
+            android:inputType="text"
+            android:enabled="false" />
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Поле содержимого -->
+    <EditText
+        android:id="@+id/editTextContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:hint="Содержимое"
+        android:inputType="textMultiLine"
+        android:gravity="top"
+        android:enabled="false" />
+
+    <!-- Контейнер для кнопок "Сохранить" и "Отмена" -->
+    <LinearLayout
+        android:id="@+id/buttonContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/buttonSave"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Сохранить" />
+
+        <Button
+            android:id="@+id/buttonCancel"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Отмена" />
+    </LinearLayout>
+
+    <!-- Кнопка "Редактировать" -->
+    <Button
+        android:id="@+id/buttonEdit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Редактировать" />
+</LinearLayout>
