@@ -19,7 +19,7 @@ public class FragmentNoteDetails extends Fragment {
 
     private EditText editTextTitle, editTextContent;
     private CheckBox noteCheckbox; // Используем одну переменную для CheckBox
-    private Button buttonEdit, buttonSave, buttonCancel;
+    private Button buttonEdit, buttonSave, buttonCancel, buttonDelete;
     private Note currentNote;
     private boolean isEditing = false;
 
@@ -50,6 +50,7 @@ public class FragmentNoteDetails extends Fragment {
         buttonEdit = view.findViewById(R.id.buttonEdit);
         buttonSave = view.findViewById(R.id.buttonSave);
         buttonCancel = view.findViewById(R.id.buttonCancel);
+        buttonDelete = view.findViewById(R.id.buttonDelete); // Инициализируем кнопку "Удалить"
 
         // Получение заметки и флага режима редактирования из аргументов
         boolean isEditMode = false;
@@ -83,64 +84,60 @@ public class FragmentNoteDetails extends Fragment {
                 setEditingMode(false);
             }
         });
+
+        buttonDelete = view.findViewById(R.id.buttonDelete);
+
+        buttonDelete.setOnClickListener(v -> deleteNote());
+
+
+        noteCheckbox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (!isEditing && currentNote != null) {
+                // Обновляем состояние заметки
+                currentNote.setCompleted(isChecked);
+                saveCheckboxState(); // Сохраняем в базу и обновляем список
+            }
+        });
+
     }
 
+    private void deleteNote() {
+        if (currentNote.getId() == 0) {
+            Toast.makeText(requireContext(), "Эту заметку нельзя удалить.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new Thread(() -> {
+            NotesDatabase db = NotesDatabase.getInstance(requireContext());
+            NotesDao dao = db.notesDao();
+            dao.delete(currentNote); // Удаление из базы данных
+
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(requireContext(), "Заметка удалена!", Toast.LENGTH_SHORT).show();
+
+                if (onNoteUpdatedListener != null) {
+                    onNoteUpdatedListener.onNoteUpdated(null); // Уведомляем, что заметка удалена
+                }
+
+                // Закрываем текущий фрагмент
+                requireActivity().getSupportFragmentManager().popBackStack();
+            });
+        }).start();
+    }
 
     private void setEditingMode(boolean editing) {
         isEditing = editing;
         editTextTitle.setEnabled(editing);
         editTextContent.setEnabled(editing);
-        noteCheckbox.setEnabled(editing); // Включение/отключение CheckBox
 
-        buttonEdit.setVisibility(editing ? View.GONE : View.VISIBLE);
-        buttonSave.setVisibility(editing ? View.VISIBLE : View.GONE);
-        buttonCancel.setVisibility(editing ? View.VISIBLE : View.GONE);
+        buttonEdit.setVisibility(editing ? View.GONE : View.VISIBLE); // Кнопка "Редактировать" скрыта при редактировании
+        buttonSave.setVisibility(editing ? View.VISIBLE : View.GONE); // Кнопка "Сохранить" видима только в режиме редактирования
+        buttonCancel.setVisibility(editing ? View.VISIBLE : View.GONE); // Кнопка "Отмена" видима только в режиме редактирования
+        buttonDelete.setVisibility(!editing ? View.VISIBLE : View.GONE); // Кнопка "Удалить" доступна только в режиме просмотра
 
         View buttonContainer = requireView().findViewById(R.id.buttonContainer);
-        buttonContainer.setVisibility(editing ? View.VISIBLE : View.GONE);
+        buttonContainer.setVisibility(View.VISIBLE); // Убедитесь, что контейнер для кнопок всегда видим
     }
 
-
-    private boolean isSaving = false; // Флаг для предотвращения повторного вызова
-
-    /*private void saveNote() {
-        if (isSaving) return; // Прерываем, если сохранение уже запущено
-        isSaving = true;
-
-        String title = editTextTitle.getText().toString().trim();
-        String content = editTextContent.getText().toString().trim();
-
-        if (TextUtils.isEmpty(title) || TextUtils.isEmpty(content)) {
-            Toast.makeText(requireContext(), "Заполните все поля!", Toast.LENGTH_SHORT).show();
-            isSaving = false;
-            return;
-        }
-
-        currentNote.setTitle(title);
-        currentNote.setContent(content);
-        currentNote.setCompleted(noteCheckbox.isChecked());
-
-        new Thread(() -> {
-            NotesDatabase db = NotesDatabase.getInstance(requireContext());
-            NotesDao dao = db.notesDao();
-
-            if (currentNote.getId() == 0) {
-                dao.insert(currentNote);
-                Log.d("депрессия", " 129 insert called with note: " + currentNote.getTitle());
-            } else {
-                dao.update(currentNote);
-            }
-
-            requireActivity().runOnUiThread(() -> {
-                Toast.makeText(requireContext(), "Заметка сохранена!", Toast.LENGTH_SHORT).show();
-                if (onNoteUpdatedListener != null) {
-                    onNoteUpdatedListener.onNoteUpdated(currentNote);
-                }
-                setEditingMode(false);
-                isSaving = false; // Сбрасываем флаг после завершения
-            });
-        }).start();
-    }*/
 
     private void saveNote() {
         String title = editTextTitle.getText().toString().trim();
@@ -164,9 +161,6 @@ public class FragmentNoteDetails extends Fragment {
 
         setEditingMode(false); // Выход из режима редактирования
     }
-
-
-
 
 
     private void saveCheckboxState() {

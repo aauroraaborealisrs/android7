@@ -55,6 +55,13 @@
             android:text="Сохранить" />
 
         <Button
+            android:id="@+id/buttonDelete"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Удалить"
+            />
+
+        <Button
             android:id="@+id/buttonCancel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

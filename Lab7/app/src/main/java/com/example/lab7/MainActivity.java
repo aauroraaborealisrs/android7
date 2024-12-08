@@ -65,9 +65,25 @@ public class MainActivity extends AppCompatActivity {
                 detailsFragment.setArguments(bundle);
 
                 // Обновление заметки через Listener
+//                detailsFragment.setOnNoteUpdatedListener(updatedNote -> {
+//                    updateNoteInDatabase(updatedNote);
+//                });
+
                 detailsFragment.setOnNoteUpdatedListener(updatedNote -> {
-                    updateNoteInDatabase(updatedNote);
+                    if (updatedNote == null) {
+                        new Thread(this::loadNotesFromDatabase).start(); // Перезагружаем список
+                    } else {
+                        new Thread(() -> {
+                            if (updatedNote.getId() == 0) {
+                                notesDao.insert(updatedNote);
+                            } else {
+                                notesDao.update(updatedNote);
+                            }
+                            loadNotesFromDatabase();
+                        }).start();
+                    }
                 });
+
 
                 // Замена фрагмента деталей
                 fragmentManager.beginTransaction()
