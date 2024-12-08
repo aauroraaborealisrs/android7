@@ -25,8 +25,8 @@ public class MainActivity extends AppCompatActivity {
     private FragmentNoteList noteListFragment; // Фрагмент для отображения списка заметок
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle savedState) {
+        super.onCreate(savedState);
         setContentView(R.layout.activity_main);
 
         // Настройка отступов для системных панелей
@@ -72,6 +72,15 @@ public class MainActivity extends AppCompatActivity {
                 detailsFragment.setOnNoteUpdatedListener(updatedNote -> {
                     if (updatedNote == null) {
                         new Thread(this::loadNotesFromDatabase).start(); // Перезагружаем список
+                        // Если заметка удалена, убираем детальный фрагмент
+                        if (findViewById(R.id.detailsFragmentContainer) != null) {
+                            getSupportFragmentManager().beginTransaction()
+                                    .remove(detailsFragment)
+                                    .commit();
+                        } else {
+                            // Если это телефонный режим, просто завершаем активность
+                            finish();
+                        }
                     } else {
                         new Thread(() -> {
                             if (updatedNote.getId() == 0) {
@@ -110,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void loadNotesFromDatabase() {
+    public void loadNotesFromDatabase() {
         Log.d("депрессия", "loadNotesFromDatabase called.");
 
         new Thread(() -> {
@@ -143,7 +152,11 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 100 && resultCode == RESULT_OK && data != null) {
             Note updatedNote = data.getParcelableExtra("updatedNote");
-            if (updatedNote != null) {
+            if (updatedNote == null) {
+                // Если заметка удалена
+                loadNotesFromDatabase();
+            } else {
+                // Если заметка обновлена
                 updateNoteInDatabase(updatedNote);
             }
         }

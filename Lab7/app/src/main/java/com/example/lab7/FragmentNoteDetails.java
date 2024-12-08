@@ -1,5 +1,8 @@
 package com.example.lab7;
 
+import static android.app.Activity.RESULT_OK;
+
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -100,6 +103,40 @@ public class FragmentNoteDetails extends Fragment {
 
     }
 
+    /*private void deleteNote() {
+        if (currentNote.getId() == 0) {
+            Toast.makeText(requireContext(), "Эту заметку нельзя удалить.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new Thread(() -> {
+            NotesDatabase db = NotesDatabase.getInstance(requireContext());
+            NotesDao dao = db.notesDao();
+            dao.delete(currentNote); // Удаление из базы данных
+
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(requireContext(), "Заметка удалена!", Toast.LENGTH_SHORT).show();
+
+                if (onNoteUpdatedListener != null) {
+                    onNoteUpdatedListener.onNoteUpdated(null); // Уведомляем, что заметка удалена
+                }
+
+                clearDetails();
+
+
+                if (requireActivity() instanceof NoteDetailsActivity) {
+                    // Закрываем активность на телефоне
+                    ((MainActivity) requireActivity()).loadNotesFromDatabase();
+
+                    requireActivity().finish();
+                } else {
+                    // Удаляем фрагмент на планшете
+                    requireActivity().getSupportFragmentManager().popBackStack();
+                }
+            });
+        }).start();
+    }*/
+
     private void deleteNote() {
         if (currentNote.getId() == 0) {
             Toast.makeText(requireContext(), "Эту заметку нельзя удалить.", Toast.LENGTH_SHORT).show();
@@ -118,11 +155,36 @@ public class FragmentNoteDetails extends Fragment {
                     onNoteUpdatedListener.onNoteUpdated(null); // Уведомляем, что заметка удалена
                 }
 
-                // Закрываем текущий фрагмент
-                requireActivity().getSupportFragmentManager().popBackStack();
+                clearDetails();
+
+
+                if (requireActivity() instanceof NoteDetailsActivity) {
+                    // Закрываем активность на телефоне
+                    requireActivity().setResult(requireActivity().RESULT_OK);
+                    Intent intent = new Intent();
+                    requireActivity().setResult(RESULT_OK, intent); // Без заметки (удалено)
+                    requireActivity().finish();
+                } else if (requireActivity() instanceof MainActivity) {
+                    // Обновляем список заметок на планшете
+                    MainActivity mainActivity = (MainActivity) requireActivity();
+                    mainActivity.loadNotesFromDatabase(); // Обновляем данные списка
+                    requireActivity().getSupportFragmentManager().popBackStack();
+                }
             });
         }).start();
     }
+
+
+    public void clearDetails() {
+        editTextTitle.setText("");
+        editTextContent.setText("");
+        noteCheckbox.setChecked(false);
+        buttonEdit.setVisibility(View.GONE);
+        buttonSave.setVisibility(View.GONE);
+        buttonCancel.setVisibility(View.GONE);
+        Toast.makeText(requireContext(), "Заметка удалена", Toast.LENGTH_SHORT).show();
+    }
+
 
     private void setEditingMode(boolean editing) {
         isEditing = editing;
@@ -159,11 +221,22 @@ public class FragmentNoteDetails extends Fragment {
             Log.d("FragmentNoteDetails", "onNoteUpdatedListener вызван для заметки: " + currentNote.getTitle());
         }
 
-        setEditingMode(false); // Выход из режима редактирования
+        // Если мы на телефоне (в активности NoteDetailsActivity), закрываем активность
+        if (requireActivity().getClass().equals(NoteDetailsActivity.class)) {
+            requireActivity().finish(); // Закрываем активность
+            Log.d("FragmentNoteDetails", "requireActivity().finish(); " + currentNote.getTitle());
+
+        } else {
+            // На планшете выходим из режима редактирования
+            setEditingMode(false);
+            Log.d("FragmentNoteDetails", " setEditingMode(false); " + currentNote.getTitle());
+
+        }
+
     }
 
 
-    private void saveCheckboxState() {
+    /*private void saveCheckboxState() {
         new Thread(() -> {
             NotesDatabase db = NotesDatabase.getInstance(requireContext());
             NotesDao dao = db.notesDao();
@@ -179,7 +252,31 @@ public class FragmentNoteDetails extends Fragment {
                 }
             });
         }).start();
+    }*/
+
+    private void saveCheckboxState() {
+        new Thread(() -> {
+            NotesDatabase db = NotesDatabase.getInstance(requireContext());
+            NotesDao dao = db.notesDao();
+
+            dao.update(currentNote); // Обновление состояния заметки
+
+            requireActivity().runOnUiThread(() -> {
+                if (!isAdded()) {
+                    // Если фрагмент не добавлен, прерываем выполнение
+                    return;
+                }
+
+                Toast.makeText(requireContext(), "Состояние обновлено!", Toast.LENGTH_SHORT).show();
+
+                // Уведомляем слушателя об обновлении
+                if (onNoteUpdatedListener != null) {
+                    onNoteUpdatedListener.onNoteUpdated(currentNote);
+                }
+            });
+        }).start();
     }
+
 
     public Note getUpdatedNote() {
         return currentNote;
